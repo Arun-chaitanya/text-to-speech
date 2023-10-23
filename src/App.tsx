@@ -9,15 +9,26 @@ function App() {
   const [sentences, setSentences] = useState<string[]>([]);
   const [fetchNumber, setFetchNumber] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const { currentWord, setCurrentWord, currentSentence, controls } =
-    useSpeech(sentences);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const {
+    currentWord,
+    setCurrentWord,
+    setCurrentSentence,
+    currentSentence,
+    controls,
+  } = useSpeech(sentences);
 
   useEffect(() => {
     setIsLoading(true);
+    if (fetchNumber) {
+      setIsPlaying(true);
+    }
     (async () => {
       try {
         const ssml = await fetchContent();
         setSentences(parseContentIntoSentences(ssml));
+        setCurrentWord(-1);
       } catch (e) {
         console.error("Error in fetching ssml: ", e);
       } finally {
@@ -25,6 +36,12 @@ function App() {
       }
     })();
   }, [fetchNumber]);
+
+  useEffect(() => {
+    if (currentSentence >= sentences.length) {
+      setIsPlaying(false);
+    }
+  }, [currentSentence, sentences]);
 
   return (
     <div className="App">
@@ -52,13 +69,26 @@ function App() {
           )}
           <div>
             <Controls
+              isPlaying={isPlaying}
               managePause={() => {
                 controls.pause();
               }}
               managePlay={() => {
-                controls.load(sentences[currentSentence]);
-                setCurrentWord(-1);
-                controls.play();
+                setIsPlaying(!isPlaying);
+                if (currentSentence >= sentences.length) {
+                  setCurrentSentence(0);
+                } else {
+                  controls.load(
+                    currentWord === -1
+                      ? sentences[currentSentence]
+                      : sentences[currentSentence]
+                          .split(" ")
+                          .slice(currentWord)
+                          .join(" ")
+                  );
+                  currentWord !== -1 && setCurrentWord(currentWord);
+                  controls.play();
+                }
               }}
               manageFetchNewContent={() => setFetchNumber(fetchNumber + 1)}
             />

@@ -14,7 +14,7 @@ const useSpeech = (sentences: Array<string>) => {
   };
 
   const onStateUpdate = (state: PlayingState) => {
-    if (state === "ended") {
+    if (state === "ended" && activeSentence < sentences.length) {
       setActiveSentence(activeSentence + 1);
       setCurrentWordIndex(-1);
     }
@@ -45,6 +45,7 @@ const useSpeech = (sentences: Array<string>) => {
   return {
     currentWord: currentWordIndex,
     setCurrentWord: setCurrentWordIndex,
+    setCurrentSentence: setActiveSentence,
     currentSentence: activeSentence,
     controls: {
       state,
